@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zetesis Lab | Decision Engineering</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              serif: ['Playfair Display', 'serif'],
+              mono: ['Space Mono', 'monospace'],
+            },
+            colors: {
+              'zetesis-black': '#050505',
+              'zetesis-paper': '#f4f4f0',
+              'zetesis-grid': '#e0e0e0',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      html, body { height: 100%; scroll-behavior: smooth; }
+      body { background-color: #ffffff; color: #050505; }
+      
+      /* Raw aesthetic overrides */
+      * {
+        border-color: #050505;
+      }
+      ::selection {
+        background: #050505;
+        color: #ffffff;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "d3": "https://esm.sh/d3@^7.9.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="antialiased">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
