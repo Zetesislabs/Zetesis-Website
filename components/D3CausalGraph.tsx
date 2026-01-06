@@ -77,7 +77,21 @@ const D3CausalGraph: React.FC = () => {
         }
 
         // Identify a "Target" node in the middle-ish
-        const target = nodes.find(n => n.x > dimensions.width * 0.4 && n.x < dimensions.width * 0.6 && n.y > dimensions.height * 0.4);
+        // Identify a "Target" node that HAS connections
+        // Filter nodes that have at least one potential connection to ensure it's not independent
+        const candidates = nodes.filter(n => {
+            // Check if it would have any parents
+            const hasParents = nodes.some(other => {
+                const dx = n.x - other.x;
+                return dx > 0 && Math.hypot(n.x - other.x, n.y - other.y) < spacingX * 1.8;
+            });
+            return hasParents && n.x > dimensions.width * 0.3 && n.x < dimensions.width * 0.7;
+        });
+
+        const target = candidates.length > 0
+            ? candidates[Math.floor(Math.random() * candidates.length)]
+            : nodes.find(n => n.x > dimensions.width * 0.4);
+
         const targetId = target ? target.id : (nodes[0]?.id || '');
         const pIds: string[] = [];
 
@@ -116,21 +130,46 @@ const D3CausalGraph: React.FC = () => {
         return { initialNodes: nodes, initialLinks: links, targetNodeId: targetId, parentIds: pIds };
     }, [dimensions]);
 
-    // 5. Generate "New" Nodes to fill space (The "Addition" State)
-    const newNodes = useMemo(() => {
-        if (dimensions.width === 0) return [];
-        const count = 15; // How many new nodes to add
+    // 5. Generate "New" Nodes (Fixed logic to prevent floating edges)
+    // We compute their links HERE, statically, relative to the *initial* graph.
+    const { newNodes, newLinks } = useMemo(() => {
+        if (dimensions.width === 0) return { newNodes: [], newLinks: [] };
+        // Deterministic "random" setup based on dimensions to keep it stable during render
+        const count = 15;
         const nodes: Node[] = [];
+        const links: Link[] = [];
+
         for (let k = 0; k < count; k++) {
-            nodes.push({
+            const newNode = {
                 id: `new-${k}`,
-                x: Math.random() * dimensions.width * 0.8 + dimensions.width * 0.1,
+                // Try to place them in the "hole" created by the deleted node, or generally around
+                x: Math.random() * dimensions.width * 0.6 + dimensions.width * 0.2,
                 y: Math.random() * dimensions.height * 0.8 + dimensions.height * 0.1,
-                type: 'new'
-            });
+                type: 'new' as const
+            };
+            nodes.push(newNode);
+
+            // Find a VALID neighbor to connect FROM
+            // Must be an existing 'base' or 'parent' node (not target, not another new node to avoid chains for now)
+            // And must be to the LEFT (causal direction)
+            const validParents = initialNodes.filter(n =>
+                n.type !== 'target' &&
+                n.x < newNode.x &&
+                Math.hypot(n.x - newNode.x, n.y - newNode.y) < dimensions.width / 4
+            );
+
+            if (validParents.length > 0) {
+                // Pick the closest one
+                const nearest = validParents.reduce((prev, curr) => {
+                    const dCurr = Math.hypot(curr.x - newNode.x, curr.y - newNode.y);
+                    const dPrev = Math.hypot(prev.x - newNode.x, prev.y - newNode.y);
+                    return dCurr < dPrev ? curr : prev;
+                });
+                links.push({ source: nearest.id, target: newNode.id });
+            }
         }
-        return nodes;
-    }, [dimensions]);
+        return { newNodes: nodes, newLinks: links };
+    }, [dimensions, initialNodes]); // Re-run if initial network changes
 
     // Animation State Listeners
     const [highlightProgress, setHighlightProgress] = useState(0);
@@ -193,27 +232,32 @@ const D3CausalGraph: React.FC = () => {
                         />
                     )
                 })}
-                {/* Dynamic New Links (simplified: purely visual proximity for new nodes) */}
-                {newNodes.slice(0, Math.floor(additionProgress * newNodes.length)).map((node, i) => {
-                    // Connect to nearest existing non-target node
-                    const nearest = initialNodes.reduce((prev, curr) => {
-                        if (curr.type === 'target') return prev;
-                        const dCurr = Math.hypot(curr.x - node.x, curr.y - node.y);
-                        const dPrev = Math.hypot(prev.x - node.x, prev.y - node.y);
-                        return dCurr < dPrev ? curr : prev;
-                    }, initialNodes[0]);
+                {/* Dynamic New Links (Using pre-calculated valid links) */}
+                {newLinks.map((link, i) => {
+                    // Only show if the TARGET node (the new one) should be visible
+                    // We need to find the index of the target node in newNodes to check animation progress
+                    const targetIndex = newNodes.findIndex(n => n.id === link.target);
+                    // Use a slightly loose comparison to avoid index -1 issues, though pre-calc should prevent it
+                    const isVisible = targetIndex !== -1 && targetIndex < additionProgress * newNodes.length;
 
-                    if (!nearest) return null;
+                    const s = initialNodes.find(n => n.id === link.source);
+                    const t = newNodes.find(n => n.id === link.target);
+
+                    if (!s || !t) return null;
 
                     return (
                         <motion.line
                             key={`new-link-${i}`}
-                            x1={nearest.x} y1={nearest.y} x2={node.x} y2={node.y}
+                            x1={s.x} y1={s.y} x2={t.x} y2={t.y}
                             stroke="#8b5cf6" // Purple
                             strokeWidth="1"
                             markerEnd="url(#arrow-head-purple)"
+                            // Init opacity 0. If visible, animate to 1.
                             initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: 1 }}
+                            animate={{
+                                pathLength: isVisible ? 1 : 0,
+                                opacity: isVisible ? 1 : 0
+                            }}
                             transition={{ duration: 0.5 }}
                         />
                     )
