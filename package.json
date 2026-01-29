@@ -1,27 +1,27 @@
 {
-  "name": "copy-of-zetesis-lab",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "name": "zetesis-website",
+  "version": "1.0.0",
+  "description": "Minimal, academic-styled website for Zetesis Labs.",
+  "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build:css": "tailwindcss -i ./src/input.css -o ./output.css",
+    "dev": "tailwindcss -i ./src/input.css -o ./output.css --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "dependencies": {
-    "lucide-react": "^0.460.0",
-    "d3": "^7.9.0",
-    "react-dom": "^18.3.1",
-    "react": "^18.3.1",
-    "framer-motion": "^11.0.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dhruvgupta-zetesis/Zetesis-Website.git"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dhruvgupta-zetesis/Zetesis-Website/issues"
+  },
+  "homepage": "https://github.com/dhruvgupta-zetesis/Zetesis-Website#readme",
   "devDependencies": {
-    "@types/node": "^20.14.0",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "typescript": "~5.4.0",
-    "@types/d3": "^7.0.0",
-    "vite": "^5.2.0"
+    "@tailwindcss/cli": "^4.1.18",
+    "tailwindcss": "^4.1.18"
   }
 }

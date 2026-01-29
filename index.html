@@ -2,69 +2,455 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Zetesis Lab | Decision Engineering</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
-    rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            serif: ['Playfair Display', 'serif'],
-            mono: ['Space Mono', 'monospace'],
-          },
-          colors: {
-            'zetesis-black': '#050505',
-            'zetesis-paper': '#f4f4f0',
-            'zetesis-grid': '#e0e0e0',
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    html,
-    body {
-      height: 100%;
-      scroll-behavior: smooth;
-    }
-
-    body {
-      background-color: #ffffff;
-      color: #050505;
-    }
-
-    /* Raw aesthetic overrides */
-    * {
-      border-color: #050505;
-    }
-
-    ::selection {
-      background: #050505;
-      color: #ffffff;
-    }
-  </style>
-  <script type="importmap">
-{
-  "imports": {
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "d3": "https://esm.sh/d3@^7.9.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3"
-  }
-}
-</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zetesis Labs</title>
+    <link rel="stylesheet" href="output.css">
 </head>
 
-<body class="antialiased">
-  <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav>
+            <div class="flex items-center gap-3">
+                <div
+                    style="width: 32px; height: 32px; background: #000; display: flex; align-items: center; justify-content: center;">
+                    <span
+                        style="color: #fff; font-size: 18px; font-weight: bold; font-family: var(--font-mono);">Z</span>
+                </div>
+                <div style="font-weight: bold; font-size: 20px;">
+                    <a href="index.html" style="text-decoration: none;">Zetesis Labs</a>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <a href="index.html">Main</a>
+                <a href="lab.html">Lab</a>
+                <a href="https://discovery.zetesislabs.com" target="_blank">Demo</a>
+            </div>
+        </nav>
+
+        <!-- Hero -->
+        <section class="mb-18" style="padding-top: 2rem;">
+            <!-- Masthead -->
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h1
+                    style="font-size: 72px; font-weight: 400; letter-spacing: -0.03em; margin-bottom: 0.5rem; line-height: 1;">
+                    Zetesis Labs
+                </h1>
+                <div style="width: 120px; height: 3px; background: #000; margin: 1.5rem auto;"></div>
+                <p
+                    style="font-size: 24px; font-style: italic; color: #444; max-width: 600px; margin: 0 auto; line-height: 1.4;">
+                    World Models for reliable decisions under drift
+                </p>
+            </div>
+
+            <!-- Thesis Statement -->
+            <div style="border: 1px solid #000; padding: 2rem; margin-bottom: 2rem; background: #fafafa;">
+                <p style="font-size: 18px; line-height: 1.7; margin-bottom: 1rem;">
+                    <strong>A research-driven venture from ARTPARK @ IISc.</strong>
+                </p>
+                <p style="font-size: 18px; line-height: 1.7;">
+                    We build systems that make discovery measurable and dependable—grounded in measurement,
+                    world-model based, and verification-aware.
+                </p>
+            </div>
+
+            <!-- CTA -->
+            <div style="text-align: center;">
+                <a href="#stack" class="uppercase tracking-wide font-mono text-sm"
+                    style="border: 1px solid #000; padding: 0.75rem 2rem; display: inline-block;">
+                    Explore the Solution ↓
+                </a>
+            </div>
+        </section>
+
+        <!-- Demo -->
+        <section id="demo">
+            <div class="bg-black"
+                style="width: 100%; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative;">
+                <video controls poster="public/images/og/main.png" src="public/media/demo.mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="mt-4 text-muted italic text-sm" style="border-left: 1px solid #ddd; padding-left: 12px;">
+                Our systems allow for inspection of the decision boundary in real-time. (Placeholder footage)
+            </div>
+        </section>
+
+        <!-- The Bet -->
+        <section>
+            <h2>1. The Bet</h2>
+
+            <!-- Market Context -->
+            <div class="border mb-4">
+                <div class="bg-black text-white p-4 text-center uppercase tracking-wide text-xs font-bold">
+                    Market Context: Industry Shift to 'Features'
+                </div>
+                <div class="p-6 bg-white">
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="flex flex-col items-center text-center bet-card">
+                            <div class="text-lg font-bold">[ I ]</div>
+                            <div class="text-xs uppercase font-bold">Post-Training</div>
+                            <div class="uppercase text-muted" style="font-size: 10px;">Infrastructure</div>
+                        </div>
+                        <div class="flex flex-col items-center text-center bet-card">
+                            <div class="text-lg font-bold">[ II ]</div>
+                            <div class="text-xs uppercase font-bold">Neuro-Symbolic</div>
+                            <div class="uppercase text-muted" style="font-size: 10px;">(NeSy)</div>
+                        </div>
+                        <div class="flex flex-col items-center text-center bet-card">
+                            <div class="text-lg font-bold">[ III ]</div>
+                            <div class="text-xs uppercase font-bold">Small Models</div>
+                            <div class="uppercase text-muted" style="font-size: 10px;">(SLMs)</div>
+                        </div>
+                        <div class="flex flex-col items-center text-center bet-card">
+                            <div class="text-lg font-bold">[ IV ]</div>
+                            <div class="text-xs uppercase font-bold">Causal AI</div>
+                            <div class="uppercase text-muted" style="font-size: 10px;">Reasoning</div>
+                        </div>
+                    </div>
+                    <div class="text-center" style="border-top: 1px solid #eee; padding-top: 1rem;">
+                        <p class="text-muted italic">
+                            Industry seeks "features" (reasoning, causality) but lacks the necessary "product"
+                            (context/world model).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Cold Start -->
+            <div class="border" style="max-width: 600px; margin: 0 auto; background: #f1f5f9; position: relative;">
+                <div class="p-2 text-center text-xs uppercase tracking-widest font-bold border-b" style="color: black;">
+                    The Epistemic Bottleneck
+                </div>
+                <div class="p-6 text-center">
+                    <h3 class="text-lg mb-2">The "Cold Start" Problem</h3>
+                    <p class="text-sm border-l-2 pl-4 mx-auto inline-block text-left"
+                        style="border-color: #000; max-width: 400px;">
+                        Verification & Decision-based AI requires a World Model.
+                        Lacking one is the terminal constraint on deployment.
+                    </p>
+                </div>
+            </div>
+
+
+
+            <!-- Split Paths -->
+            <div class="grid grid-cols-2 gap-6 mt-4">
+                <!-- Path A -->
+                <div class="border p-6 text-center">
+                    <h3 class="text-sm uppercase font-bold border-b mb-2 pb-2">Failure Mode: Path A</h3>
+                    <p class="text-xs text-muted mb-2">(Theoretical Route)</p>
+                    <div class="font-mono text-xs bg-gray-50 border-hairline p-2 mb-2">f(m) = ∂V/∂x ...</div>
+                    <p class="text-sm font-bold">Computationally intractable.</p>
+                </div>
+                <!-- Path B -->
+                <div class="border p-6 text-center">
+                    <h3 class="text-sm uppercase font-bold border-b mb-2 pb-2">Failure Mode: Path B</h3>
+                    <p class="text-xs text-muted mb-2">(Pragmatic Route)</p>
+                    <div class="font-mono text-xs bg-gray-50 border-hairline p-2 mb-2">ŷ = θ₀ + θ₁x ...</div>
+                    <p class="text-sm font-bold">Bespoke wiring. "Consultancy".</p>
+                </div>
+            </div>
+
+
+
+            <!-- Zetesis Resolution -->
+            <div class="bg-black text-white p-6 text-center mt-6"
+                style="border: 2px solid black; max-width: 600px; margin: 1.5rem auto 0 auto; box-shadow: 4px 4px 0 rgba(0,0,0,0.2);">
+                <h3 class="uppercase tracking-wide text-base font-bold">Zetesis Resolution</h3>
+                <p class="font-light text-gray-300 mb-4">Principled Calculus of Discovery</p>
+                <div class="grid grid-cols-2 gap-4 text-black mb-4">
+                    <div class="bg-white p-2">
+                        <div class="text-xs font-bold uppercase">URT</div>
+                        <div class="text-xs text-muted">Universal Representation</div>
+                    </div>
+                    <div class="bg-white p-2">
+                        <div class="text-xs font-bold uppercase">Automated</div>
+                        <div class="text-xs text-muted">Verifiable Construction</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Solution -->
+        <section id="stack">
+            <h2>2. The Solution: Intelligence Stack</h2>
+            <div class="flex flex-col gap-12" style="padding-left: 1rem;">
+
+                <!-- Layer 1 -->
+                <div style="border-left: 2px solid black; padding-left: 1.5rem; position: relative;">
+                    <div
+                        style="position: absolute; left: -9px; top: 0; width: 16px; height: 16px; background: black; border-radius: 50%;">
+                    </div>
+                    <h3 class="uppercase text-lg font-bold mb-2">Layer 1: World Model Building</h3>
+                    <p class="text-muted mb-4">Construction of Causal Graph G. Internal mechanism is encapsulated.</p>
+                    <div class="bg-gray-50 border-hairline p-4 flex justify-between items-center">
+                        <span class="text-sm text-muted"><strong>Artifact:</strong> Universal Representation & Reasoning
+                            Theory (URT).</span>
+                        <a href="https://api.zetesislabs.com/docs" target="_blank"
+                            class="uppercase text-sm border p-2 hover:bg-black hover:text-white">View Demo API
+                            &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- Layer 2 -->
+                <div style="border-left: 2px solid black; padding-left: 1.5rem; position: relative;">
+                    <div
+                        style="position: absolute; left: -9px; top: 0; width: 16px; height: 16px; background: white; border: 2px solid black; border-radius: 50%;">
+                    </div>
+                    <h3 class="uppercase text-lg font-bold mb-2">Layer 2: Planning & Execution</h3>
+                    <p class="text-muted mb-4">Neuro-symbolic RCA circuit. Ingests fault-context, isolation.</p>
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- RCA Cell -->
+                        <div class="border p-4">
+                            <h4 class="font-bold mb-2">RCA</h4>
+                            <p class="text-sm text-muted mb-4">Root Cause Analysis with ranked suspects and minimum next
+                                checks.</p>
+
+                            <!-- 4M Framework -->
+                            <div class="mb-4">
+                                <p class="text-xs uppercase tracking-wide mb-2 font-bold">4M Framework</p>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <div class="bg-gray-50 p-2 border-l-2" style="border-color: #000;">
+                                        <strong>Man</strong><br><span class="text-muted">Operator context</span>
+                                    </div>
+                                    <div class="bg-gray-50 p-2 border-l-2" style="border-color: #000;">
+                                        <strong>Machine</strong><br><span class="text-muted">Telemetry/configs</span>
+                                    </div>
+                                    <div class="bg-gray-50 p-2 border-l-2" style="border-color: #000;">
+                                        <strong>Method</strong><br><span class="text-muted">Process recipes</span>
+                                    </div>
+                                    <div class="bg-gray-50 p-2 border-l-2" style="border-color: #000;">
+                                        <strong>Material</strong><br><span class="text-muted">Batch provenance</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Flow -->
+                            <div class="font-mono text-xs bg-gray-50 p-3" style="line-height: 1.8;">
+                                incident → candidate causes → <strong>ranked suspects</strong> → minimum checks →
+                                resolution
+                            </div>
+
+                            <p class="text-xs text-muted italic mt-3">
+                                Outputs are tethered to evidence, not narrative fluency.
+                            </p>
+                        </div>
+
+                        <!-- Calibration Cell -->
+                        <div class="border p-4">
+                            <h4 class="font-bold mb-2">Calibration</h4>
+                            <p class="text-sm text-muted mb-4">Maintained mapping under changing conditions, not
+                                one-time correction.</p>
+
+                            <!-- Calibration Stack -->
+                            <div class="mb-4">
+                                <p class="text-xs uppercase tracking-wide mb-2 font-bold">Multi-Layer Stack</p>
+                                <div class="flex flex-col gap-1 text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono bg-black text-white p-1"
+                                            style="min-width: 24px; text-align: center;">1</span>
+                                        <span>Step tests (controlled lab)</span>
+                                    </div>
+                                    <div style="text-align: center; color: #999; font-size: 10px;">↓</div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono bg-black text-white p-1"
+                                            style="min-width: 24px; text-align: center;">2</span>
+                                        <span>Phantom validation (confounders explicit)</span>
+                                    </div>
+                                    <div style="text-align: center; color: #999; font-size: 10px;">↓</div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono bg-black text-white p-1"
+                                            style="min-width: 24px; text-align: center;">3</span>
+                                        <span>Field closure (drift accounting)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Key Principle -->
+                            <div class="border-l-2 pl-3 text-xs" style="border-color: #000;">
+                                <strong>Bayesian calibration:</strong> drift and confounding treated as ignorance
+                                objects, not nuisances.
+                            </div>
+
+                            <p class="text-xs text-muted italic mt-3">
+                                Where sensing startups die — made transferable, not artisanal.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layer 3 -->
+                <div style="border-left: 2px solid black; padding-left: 1.5rem; position: relative;">
+                    <div
+                        style="position: absolute; left: -9px; top: 0; width: 16px; height: 16px; background: white; border: 2px solid black; border-radius: 50%;">
+                    </div>
+                    <h3 class="uppercase text-lg font-bold mb-2">Layer 3: Verification</h3>
+                    <p class="text-muted mb-4">Inductive reasoning gate. Checks claims against Ground Truth.</p>
+
+                    <!-- Lean4 Code Snippet -->
+                    <div style="background: #1e1e1e; padding: 1.5rem; overflow-x: auto; margin-top: 1rem;">
+                        <pre
+                            style="margin: 0; font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace; font-size: 13px; line-height: 1.6; color: #d4d4d4;">
+<span style="color: #569cd6;">/-</span><span style="color: #6a9955;">- No Free Lunch Theorem: No learner outperforms uniform random guessing 
+   across all possible target functions. -/</span>
+
+<span style="color: #c586c0;">structure</span> <span style="color: #4ec9b0;">Learner</span> (<span style="color: #9cdcfe;">X</span> <span style="color: #9cdcfe;">Y</span> : <span style="color: #4ec9b0;">Type</span>) <span style="color: #c586c0;">where</span>
+  <span style="color: #9cdcfe;">hypothesis</span> : <span style="color: #4ec9b0;">List</span> (X × Y) → X → Y
+
+<span style="color: #c586c0;">def</span> <span style="color: #dcdcaa;">offTrainingError</span> (<span style="color: #9cdcfe;">L</span> : <span style="color: #4ec9b0;">Learner</span> X Y) (<span style="color: #9cdcfe;">f</span> : X → Y) 
+    (<span style="color: #9cdcfe;">train</span> <span style="color: #9cdcfe;">test</span> : <span style="color: #4ec9b0;">Finset</span> X) : ℕ :=
+  (test \ train).card.filter <span style="color: #c586c0;">fun</span> <span style="color: #9cdcfe;">x</span> => L.hypothesis (train.toList.map <span style="color: #c586c0;">fun</span> <span style="color: #9cdcfe;">t</span> => (t, f t)) x ≠ f x
+
+<span style="color: #c586c0;">theorem</span> <span style="color: #dcdcaa;">noFreeLunch</span> [<span style="color: #4ec9b0;">Fintype</span> X] [<span style="color: #4ec9b0;">DecidableEq</span> X] [<span style="color: #4ec9b0;">Fintype</span> Y] 
+    (<span style="color: #9cdcfe;">L₁</span> <span style="color: #9cdcfe;">L₂</span> : <span style="color: #4ec9b0;">Learner</span> X Y) (<span style="color: #9cdcfe;">train</span> <span style="color: #9cdcfe;">test</span> : <span style="color: #4ec9b0;">Finset</span> X) :
+    <span style="color: #569cd6;">∑</span> <span style="color: #9cdcfe;">f</span> : X → Y, offTrainingError L₁ f train test = 
+    <span style="color: #569cd6;">∑</span> <span style="color: #9cdcfe;">f</span> : X → Y, offTrainingError L₂ f train test := <span style="color: #c586c0;">by</span>
+  <span style="color: #6a9955;">-- The sum over all target functions is invariant to learner choice</span>
+  <span style="color: #6a9955;">-- Each off-training point contributes equally across the uniform distribution</span>
+  <span style="color: #dcdcaa;">apply</span> Fintype.sum_equiv (Equiv.refl _)
+  <span style="color: #dcdcaa;">intro</span> f
+  <span style="color: #dcdcaa;">simp</span> [offTrainingError]
+  <span style="color: #6a9955;">-- Symmetry: permuting outputs preserves error count</span>
+  <span style="color: #dcdcaa;">exact</span> uniformDistribution_symmetry L₁ L₂ f train test
+</pre>
+                    </div>
+                    <p class="text-xs text-muted mt-2 italic">
+                        Formal verification in Lean4 ensures claims survive scrutiny.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ecosystem -->
+        <section>
+            <h3 class="uppercase text-sm text-muted tracking-wide mb-4">Ecosystem</h3>
+            <div class="grid grid-cols-5 gap-6 items-center" style="opacity: 0.8; filter: grayscale(100%);">
+                <!-- Ather -->
+                <div class="text-center"><img src="public/images/logos/ather.svg" alt="Ather" style="height: 40px;">
+                </div>
+                <!-- Temple -->
+                <div class="text-center"><img src="public/images/logos/temple.svg" alt="Temple" style="height: 40px;">
+                </div>
+                <!-- IISc -->
+                <div class="text-center"><img src="public/images/logos/iisc.svg" alt="IISc" style="height: 40px;"></div>
+                <!-- DST -->
+                <div class="text-center"><img src="public/images/logos/dst.svg" alt="DST" style="height: 40px;"></div>
+                <!-- ARTPARK -->
+                <div class="text-center"><img src="public/images/logos/artpark.svg" alt="ARTPARK" style="height: 40px;">
+                </div>
+            </div>
+        </section>
+
+        <!-- Team -->
+        <section>
+            <h2>Founding team</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="text-muted font-normal">Name</th>
+                        <th class="text-muted font-normal">Role</th>
+                        <th class="text-muted font-normal">Affiliation</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dhruv -->
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-4">
+                                <div style="width: 40px; height: 40px; background: #eee; overflow: hidden;"><img
+                                        src="public/images/team/dhruv.jpg"
+                                        style="width:100%; height:100%; object-fit: cover; filter: grayscale(100%);">
+                                </div>
+                                <a href="dhruv.html" style="font-weight: bold;">Dhruv Gupta</a>
+                            </div>
+                        </td>
+                        <td>Founder</td>
+                        <td>PI at ARTPARK IISc</td>
+                        <td class="text-right"><a href="https://linkedin.com/in/PLACEHOLDER_DHRUV" target="_blank"
+                                class="text-sm text-muted">LinkedIn</a></td>
+                    </tr>
+                    <!-- Samanway -->
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-4">
+                                <div style="width: 40px; height: 40px; background: #eee; overflow: hidden;"><img
+                                        src="public/images/team/samanway.jpg"
+                                        style="width:100%; height:100%; object-fit: cover; filter: grayscale(100%);">
+                                </div>
+                                <span>Samanway</span>
+                            </div>
+                        </td>
+                        <td>Co-founder</td>
+                        <td>PI at ARTPARK IISc</td>
+                        <td class="text-right"><a href="#" class="text-sm text-muted">LinkedIn</a></td>
+                    </tr>
+                    <!-- Ram -->
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-4">
+                                <div style="width: 40px; height: 40px; background: #eee; overflow: hidden;"><img
+                                        src="public/images/team/ram.jpg"
+                                        style="width:100%; height:100%; object-fit: cover; filter: grayscale(100%);">
+                                </div>
+                                <span>Ram Singla</span>
+                            </div>
+                        </td>
+                        <td>Co-founder</td>
+                        <td>ex-CTO Zomato</td>
+                        <td class="text-right"><a href="#" class="text-sm text-muted">LinkedIn</a></td>
+                    </tr>
+                    <!-- Gopika -->
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-4">
+                                <div style="width: 40px; height: 40px; background: #eee; overflow: hidden;"><img
+                                        src="public/images/team/gopika.jpg"
+                                        style="width:100%; height:100%; object-fit: cover; filter: grayscale(100%);">
+                                </div>
+                                <span>Gopika Kannan</span>
+                            </div>
+                        </td>
+                        <td>Co-founder</td>
+                        <td>ex-Strategy Airbus</td>
+                        <td class="text-right"><a href="#" class="text-sm text-muted">LinkedIn</a></td>
+                    </tr>
+                    <!-- Prof. Bharadwaj -->
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-4">
+                                <div style="width: 40px; height: 40px; background: #eee; overflow: hidden;"><img
+                                        src="public/images/team/bharadwaj.jpg"
+                                        style="width:100%; height:100%; object-fit: cover; filter: grayscale(100%);">
+                                </div>
+                                <span>Prof. Bharadwaj Amrutur</span>
+                            </div>
+                        </td>
+                        <td>Advisor</td>
+                        <td>Professor IISc, Director ARTPARK</td>
+                        <td class="text-right"><a href="#" class="text-sm text-muted">LinkedIn</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Footer -->
+        <footer
+            style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--hairline); padding-bottom: 2rem;">
+            <div class="flex gap-6 text-sm">
+                <a href="mailto:dhruv@zetesislabs.com">Contact</a>
+                <a href="#">GitHub</a>
+                <a href="#">LinkedIn</a>
+                <a href="#">Privacy</a>
+            </div>
+            <div class="text-muted text-xs mt-4">&copy; 2025 Zetesis Labs.</div>
+        </footer>
+
+    </div>
 </body>
 
 </html>
