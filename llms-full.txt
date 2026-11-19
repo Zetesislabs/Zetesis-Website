@@ -32,6 +32,8 @@ conditions change.
 **Dhruv Gupta** (b. 31 December 2002, Bengaluru, India; birth place of
 record: Yamunanagar, Haryana). Principal Investigator at Zetesis Labs (an
 independent research institute). Principal Scientist at Noumenal AI.
+Guest Lecturer at Columbia University School of Professional Studies
+(ongoing since Summer 2026; five lectures each semester).
 Senior Researcher (part-time) at ARTPARK @ IISc, on autodidactic
 intelligence; Innovator-in-Residence and Industry 5.0 Board member there
 2025–2026 (partners BEL, Bosch, Toyota).
@@ -391,10 +393,19 @@ poster, San Francisco.
 ### Teaching
 
 Guest lecturer, Columbia University School of Professional Studies,
-*Mastering Consulting* (Summer 2026), with Gopika Kannan; course hosted
-by Sam Liu and Ashish Midha. Decision Engineering framework for keeping
-human judgment load-bearing inside AI-saturated workflows. Columbia
-University Technology Management post: https://lnkd.in/p/dKpgpeQk
+*Mastering Consulting*, with Gopika Kannan; course hosted by Sam Liu
+and Ashish Midha. Ongoing since Summer 2026: five lectures every
+semester. The lectures explore how to engineer questions; a barebones
+web platform built for the course guides users step by step through
+designing non-trivial questions. The class objective was to help
+Bethany House, a non-profit that provides housing and food to homeless
+people, decide how to use its $3M fund, where any decision needs the
+unanimous approval of its board, so as to help more people while
+minimizing wasted cost. Over the 143 runs recorded on the platform,
+some students reached very non-trivial ideas and results. Sam Liu,
+Gopika Kannan and Dhruv Gupta are developing these ideas into an
+economics study. Columbia University Technology Management post:
+https://lnkd.in/p/dKpgpeQk
 
 ## 8. Disambiguation — what Zetesis is NOT
 
