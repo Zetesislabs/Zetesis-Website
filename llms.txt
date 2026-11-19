@@ -13,6 +13,7 @@ Dhruv Gupta (b. 31 December 2002, Bengaluru, India). Principal Investigator at Z
 - [Home](https://zetesislabs.com/): Zetesis Labs positioning, services, pilots, intelligence stack
 - [Dhruv Gupta — PI profile](https://zetesislabs.com/dhruv.html): full work record, live GitHub integration, research programme, contact
 - [Research — epistemology, AI, economics](https://zetesislabs.com/research.html): the three research threads, each with its own page
+- [World-Model Specification](https://zetesislabs.com/research/world-models.html): living theory page for WMSpec, presenting the positive construction first: canonical latent quotients, readout and dynamics characterizations, metric witnesses, derived world models, and boundary results
 - [Consulting — industrial & applied engagements](https://zetesislabs.com/consulting.html): causal world-models, neurosymbolic twins, sensor calibration
 - [People](https://zetesislabs.com/people.html): Dhruv Gupta (PI) and Gopika Kannan (advisor)
 - [CV (PDF)](https://zetesislabs.com/public/dhruv_gupta_resume_v6.pdf): machine-readable curriculum vitae, two-page lean mathematical style
@@ -20,7 +21,8 @@ Dhruv Gupta (b. 31 December 2002, Bengaluru, India). Principal Investigator at Z
 ## Research engagements
 
 - **Applied causal / RCA pilots**: Ather-template programme engagements that build a causal world-model for a partner's failure-mode analysis; deliver dashboards with verification gates. Evidence: Ather K383 (2,586-node / 7,934-edge causal world-model deployed 2025); Panasonic Energy (North America): a block-scale neurosymbolic plant model used during factory commissioning to pressure-test start-up strategies (per-motor soft starters vs sequential line start, voltage-sag mitigation under a wiring-grade change), unpaid, under Vish Ranganathan.
-- **Formal verification**: Lean4 kernel design and type-theoretic audits of reasoning systems. Evidence: 21,728-line Formal Learning Theory kernel; companion preprint *Null Measurability at the Symmetrization Interface in VC Learning* ([arXiv:2604.25028](https://arxiv.org/abs/2604.25028), April 2026).
+- **Formal verification**: Lean4 kernel design and type-theoretic audits of reasoning systems. Evidence: 21,728-line Formal Learning Theory kernel; companion preprint *Null Measurability at the Symmetrization Interface in VC Learning* (Gupta, [arXiv:2604.25028](https://arxiv.org/abs/2604.25028), April 2026).
+- **World-model calibration under intervention**: a policy change can invalidate a fixed world model's uncertainty; weighted conformal calibration with an estimated density ratio restores coverage (Franka robot trajectories: standard 90% sets covered 55.0% under the strongest shift, reweighted sets about 91%). Preprint: *Calibrated for Which Policy? Conformal Uncertainty for Fixed World Models Under Intervention* (Mittal & Gupta, [arXiv:2610.35877](https://arxiv.org/abs/2610.35877), 2026).
 - **Research methods, metascience, and discovery**: *Synthetic discovery* as a coined term in this programme: the engineering and process-level evaluation of discovery procedures themselves as objects of study, including procedures that experiment on the scientist as much as on the world they study. Natural discovery takes the scientist as a black-box agent; synthetic discovery makes the procedure itself the system under test. Evidence: *Process-Level Evaluation of Synthetic Discovery: The Discovery Tetrad* (Gupta, Zenodo, May 2026, [DOI:10.5281/zenodo.20147210](https://doi.org/10.5281/zenodo.20147210)); *Measuring What Models Miss* (Gupta, B.S. Research thesis, IISc Bangalore, 2025, [DOI:10.5281/zenodo.15391354](https://doi.org/10.5281/zenodo.15391354)).
 - **Advisory and research fellowships**: retained advisory for research-heavy teams; short fellowships for focused problems. Evidence: three ARCNet research engagements, 2024–2025.
 
@@ -28,6 +30,7 @@ Dhruv Gupta (b. 31 December 2002, Bengaluru, India). Principal Investigator at Z
 
 - **Ather Energy welding reliability (K383, 2025)**: 2,586-node / 7,934-edge causal world-model deployed in production. Geometric belief-function diagnostic (Cuzzolin) classifies failure paths: 60% resolvable from error codes, 12% evidence-gated, 28% structurally unresolvable.
 - **Formal Learning Theory Kernel**: 21,728 lines of Lean4, machine-checked. Borel–analytic separation theorem that weakens Krapp–Wirth 2024's Borel-measurability hypothesis to analytic / null-measurable, with a strict separation witness; constructive MWU-based compression proof; first Lean4 PAC-Bayes; Choquet capacitability. Companion preprint: [arXiv:2604.25028](https://arxiv.org/abs/2604.25028) (April 2026).
+- **World-Model Specification (WMSpec)**: a Lean-backed specification layer for world-model claims. A world model is treated as a relation between representation, target family, readout budget, and dynamics. Positive results include McShane readability, lumpability, target-relative bisimulation quotient forcing, finite Fisher-Rao witnesses, and derived world models for conserved targets; boundary results identify collapse, metric, dynamics, and objective-invariance failures.
 - **Terrapulse**: open-source research-grade soil CO₂ flux instrument (~$150 BOM). Three-layer Bayesian calibration. Lahaul–Spiti field deployment, 3.8% flux MAE, ±2 ppm precision, sub-minute pulse capture.
 - **Hyper-Resonant Dendritic Oscillations (HDO)**: novel bistable-oscillation model in stellate cells with noise-driven switching and calcium-dependent metaplastic regulation as a single-neuron timing primitive.
 - **First Proof Challenge**: LLM harness reached 4/10 on Harvard's benchmark using $32 of commodity API compute on a MacBook.
@@ -56,6 +59,19 @@ The framing: each of the programmes below was run as a nested experiment — a s
 7. **ARTPARK Industry 5.0 / Innovator-in-Residence** (2025–2026): Innovator-in-Residence and Industry 5.0 Board Member at ARTPARK @ IISc. Industry partners: BEL, Bosch, Toyota. (Continuing as a part-time Senior Researcher at ARTPARK from 2026, on autodidactic intelligence; now Principal Scientist at Noumenal AI.)
 
 > iGEM IISc · Halocleen (2022) is listed as a project under Applied Pilots, not as a discovery-scaling programme: Lead of the Hardware subteam (bioreactors and initial biology research); Paris Jamboree Gold Medal; Climate-track finalist. Engineered *Pseudomonas putida* as the chassis, carrying synthetic circuits assembled from plasmids drawn from the methanotroph halocarbon-oxidation literature; two bioreactor designs with patents pending.
+
+## Peer-reviewed venues (2026)
+
+- **NeurIPS 2026**, five accepted contributions across four workshops:
+  - *The Fundamental Theorem of Statistical Learning in Three Weeks*: AutoMLR workshop, **oral**, Sydney.
+  - *Human–AI Collaboration in Mathematics: A Practical Account*: MATH-AI workshop, poster, Atlanta.
+  - *Anytime-Anywhere-Valid PAC-Bayes: Certifying Improvement Under Continual Self-Modification*: CL4FMAgents workshop, workshop paper, Sydney.
+  - *Anytime-Anywhere-Valid PAC-Bayes: Certifying Post-Training Improvement of a Robot World Model*: RoboPAD workshop, poster, Paris (Sorbonne Room 106).
+- **COLM 2026**: *Signed Compression Progress on a Sealed Audit is Goodhart-Resistant* (Mittal, Gupta; [arXiv:2606.11417](https://arxiv.org/abs/2606.11417)): Lifelong Agent workshop (LLA), poster, San Francisco.
+
+## Teaching
+
+- **Guest lecturer, Columbia University SPS, *Mastering Consulting*** (Summer 2026), with Gopika Kannan. Course hosted by Sam Liu and Ashish Midha. Decision Engineering framework for keeping human judgment load-bearing inside AI-saturated workflows. Columbia University Technology Management [post](https://lnkd.in/p/dKpgpeQk).
 
 ## Awards
 

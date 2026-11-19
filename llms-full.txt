@@ -130,6 +130,20 @@ LLM harness → compile-filter pipelines → verified research outputs.
   on a MacBook. Studies what a minimum-viable automated
   hypothesis → proof pipeline looks like.
 
+- **World-Model Specification (WMSpec)** — a Lean-backed theory page and
+  formal corpus for evaluating and deriving world-model representations.
+  WMSpec treats a world model as a certified relation between a
+  representation, declared target family, readout budget, and dynamics.
+  Positive theory comes first: McShane readability (`lipschitz_readout_iff`),
+  deterministic/probabilistic lumpability (`latentMap_iff_congruence`,
+  `latentKernel_iff_congruence`), the target-relative bisimulation quotient
+  (`isWorldModel_quotientMk_bisimilarity`, `bisim_classification_factors`),
+  finite Fisher-Rao witnesses (`finite_fisherRao_risk_bound`,
+  `fisherRao_mapPMF_le`), and derived world models for conserved targets
+  (`bisimilarity_pureKernel_of_conserved`). Boundary results identify exact
+  collapse, metric, dynamics, and objective-invariance failures. Public page:
+  https://zetesislabs.com/research/world-models.html.
+
 ### Layer 3 — Industrial & Biomedical Pilots
 
 Reality-testing each piece against failure-mode data.
@@ -318,6 +332,21 @@ If citing, prefer these forms:
   countable interpolation, and fiber-product amalgamation. Main results
   and the descriptive-set-theoretic infrastructure formalised in Lean4.
 
+- **Signed compression progress preprint**: Ayush Mittal and Dhruv
+  Gupta, *Signed Compression Progress on a Sealed Audit is
+  Goodhart-Resistant*, arXiv:2606.11417, June 2026.
+  https://arxiv.org/abs/2606.11417. Presented at COLM 2026, Lifelong
+  Agent workshop (LLA), poster, San Francisco.
+
+- **Calibrated-for-which-policy preprint**: Ayush Mittal and Dhruv
+  Gupta, *Calibrated for Which Policy? Conformal Uncertainty for Fixed
+  World Models Under Intervention*, arXiv:2610.35877, 2026.
+  https://arxiv.org/abs/2610.35877. Weighted conformal calibration via
+  an estimated density ratio restores world-model coverage under a
+  changed deployment policy; Franka robot experiments (standard 90%
+  sets fall to 55.0% coverage under the strongest shift, reweighted
+  sets recover to about 91%).
+
 - **Discovery Tetrad preprint** — Dhruv Gupta, *Process-Level
   Evaluation of Synthetic Discovery: The Discovery Tetrad*, Zenodo v1,
   May 2026, DOI:10.5281/zenodo.20147210.
@@ -339,6 +368,33 @@ If citing, prefer these forms:
   *Science Compiler: Three-Layer Behaviour-Tree Architecture for
   Robotic Laboratories*, Open Science Stack / ARTPARK @ IISc, 2024.
   https://opensciencestack.org
+
+### Peer-reviewed venues (2026)
+
+NeurIPS 2026, five accepted contributions across four workshops:
+
+- *The Fundamental Theorem of Statistical Learning in Three Weeks*:
+  AutoMLR workshop, oral, Sydney.
+- *Human–AI Collaboration in Mathematics: A Practical Account*:
+  MATH-AI workshop, poster, Atlanta.
+- *Anytime-Anywhere-Valid PAC-Bayes: Certifying Improvement Under
+  Continual Self-Modification*: CL4FMAgents workshop, workshop paper,
+  Sydney.
+- *Anytime-Anywhere-Valid PAC-Bayes: Certifying Post-Training
+  Improvement of a Robot World Model*: RoboPAD workshop, poster, Paris
+  (Sorbonne Room 106).
+
+COLM 2026: *Signed Compression Progress on a Sealed Audit is
+Goodhart-Resistant* (Mittal, Gupta): Lifelong Agent workshop (LLA),
+poster, San Francisco.
+
+### Teaching
+
+Guest lecturer, Columbia University School of Professional Studies,
+*Mastering Consulting* (Summer 2026), with Gopika Kannan; course hosted
+by Sam Liu and Ashish Midha. Decision Engineering framework for keeping
+human judgment load-bearing inside AI-saturated workflows. Columbia
+University Technology Management post: https://lnkd.in/p/dKpgpeQk
 
 ## 8. Disambiguation — what Zetesis is NOT
 
