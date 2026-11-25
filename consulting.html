@@ -407,23 +407,11 @@ concepts give the book's form): every learner has a target in `C` with expected 
                     </div>
                     <p class="text-xs text-muted mt-2" style="line-height: 1.6;">
                         Excerpt from <a href="public/lean/NoFreeLunch.lean.txt" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;">NoFreeLunch.lean</a>
-                        (the full file, as plain text). It checks with Lean v4.31.0 and Mathlib v4.31.0
-                        (commit <code>fabf563a</code>): no <code>sorry</code>, and
-                        <code>#print axioms</code> lists only <code>propext</code>,
-                        <code>Classical.choice</code> and <code>Quot.sound</code>. It imports only
-                        Mathlib and restates, with identical code, the definitions it uses from the
-                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/tree/cdc4fc3df3d4f9487c7f91872487a8eff120d188" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;">formal learning theory kernel</a> at commit
-                        <code>cdc4fc3</code>:
-                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Basic.lean#L37" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>Concept</code></a>,
-                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Basic.lean#L46" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>ConceptClass</code></a>,
-                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Basic.lean#L76" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>HypothesisSpace</code></a>,
-                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Learner/Core.lean#L29" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>BatchLearner</code></a>,
-                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Complexity/VCDimension.lean#L22" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>Shatters</code></a>,
-                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Complexity/VCDimension.lean#L27" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>VCDim</code></a> and
-                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Criterion/PAC.lean#L55" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>PACLearnable</code></a>. It also adapts two proofs
-                        from the kernel: <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Theorem/PAC.lean#L341" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>vcdim_univ_infinite</code></a> and
-                        the uniform-distribution construction in
-                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Complexity/Generalization.lean#L1647" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>pac_lower_bound_core</code></a>.
+                        (the full file, as plain text). It checks with Lean v4.31.0 and Mathlib v4.31.0:
+                        no <code>sorry</code>, and <code>#print axioms</code> lists only <code>propext</code>,
+                        <code>Classical.choice</code> and <code>Quot.sound</code>. It imports only Mathlib;
+                        its definitions follow the
+                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;">formal learning theory kernel</a>.
                     </p>
                     <p class="text-xs text-muted mt-2 italic">
                         One instinct runs under all of this: refuse to take a system's word for
