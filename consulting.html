@@ -354,38 +354,77 @@
                     <h3 class="uppercase text-lg font-bold mb-2">Layer 3: Verification</h3>
                     <p class="text-muted mb-4">Inductive reasoning gate. Checks claims against ground truth.</p>
                     <p class="text-sm" style="line-height: 1.6; max-width: 720px; margin-bottom: 1rem; color: #444;">
-                        Below is a machine-checked proof that no learner is universally best:
-                        across all possible target functions, no method beats guessing. That is
-                        why the stack commits to checking each claim rather than trusting any one
-                        model's confidence.
+                        Below is an excerpt from a machine-checked proof that no learner is
+                        universally best: averaged over all possible target functions, no method
+                        beats guessing on points it has not seen. That is why the stack commits to
+                        checking each claim rather than trusting any one model's confidence.
                     </p>
 
                     <div style="background: #1e1e1e; padding: 1.5rem; overflow-x: auto; margin-top: 1rem;">
                         <pre
                             style="margin: 0; font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace; font-size: 13px; line-height: 1.6; color: #d4d4d4;">
-<span style="color: #569cd6;">/-</span><span style="color: #6a9955;">- No Free Lunch Theorem: No learner outperforms uniform random guessing
-   across all possible target functions. -/</span>
+<span style="color: #c586c0;">variable</span> {<span style="color: #9cdcfe;">X</span> : <span style="color: #4ec9b0;">Type</span> u} {<span style="color: #9cdcfe;">Y</span> : <span style="color: #4ec9b0;">Type</span> v} {<span style="color: #9cdcfe;">m</span> : <span style="color: #4ec9b0;">ℕ</span>}
 
-<span style="color: #c586c0;">structure</span> <span style="color: #4ec9b0;">Learner</span> (<span style="color: #9cdcfe;">X</span> <span style="color: #9cdcfe;">Y</span> : <span style="color: #4ec9b0;">Type</span>) <span style="color: #c586c0;">where</span>
-  <span style="color: #9cdcfe;">hypothesis</span> : <span style="color: #4ec9b0;">List</span> (X &times; Y) &rarr; X &rarr; Y
+<span style="color: #569cd6;">/-</span><span style="color: #6a9955;">- Wolpert (1996), Schaffer (1994): over all targets `f : X → Y`, every learner is wrong at a
+point outside its training inputs for exactly a `(|Y| - 1) / |Y|` fraction of the targets. -/</span>
+<span style="color: #c586c0;">theorem</span> <span style="color: #dcdcaa;">nfl_average</span> [<span style="color: #4ec9b0;">Fintype</span> X] [<span style="color: #4ec9b0;">DecidableEq</span> X] [<span style="color: #4ec9b0;">Fintype</span> Y] [<span style="color: #4ec9b0;">DecidableEq</span> Y]
+    (<span style="color: #9cdcfe;">L</span> : <span style="color: #4ec9b0;">BatchLearner</span> X Y) (<span style="color: #9cdcfe;">xs</span> : <span style="color: #4ec9b0;">Fin</span> m → X) {<span style="color: #9cdcfe;">x</span> : X} (<span style="color: #9cdcfe;">hx</span> : x ∉ Set.range xs) :
+    (#{<span style="color: #9cdcfe;">f</span> : X → Y | L.learn (<span style="color: #c586c0;">fun</span> <span style="color: #9cdcfe;">i</span> =&gt; (xs i, f (xs i))) x ≠ f x} : <span style="color: #4ec9b0;">ℚ</span>) / Fintype.card (X → Y)
+      = (Fintype.card Y - 1) / Fintype.card Y :=
+  wrong_fraction L.learn xs hx  <span style="color: #6a9955;">-- the targets it gets right at x biject with labelings of X \ {x}</span>
 
-<span style="color: #c586c0;">def</span> <span style="color: #dcdcaa;">offTrainingError</span> (<span style="color: #9cdcfe;">L</span> : <span style="color: #4ec9b0;">Learner</span> X Y) (<span style="color: #9cdcfe;">f</span> : X &rarr; Y)
-    (<span style="color: #9cdcfe;">train</span> <span style="color: #9cdcfe;">test</span> : <span style="color: #4ec9b0;">Finset</span> X) : &#8469; :=
-  (test \ train).card.filter <span style="color: #c586c0;">fun</span> <span style="color: #9cdcfe;">x</span> =&gt; L.hypothesis (train.toList.map <span style="color: #c586c0;">fun</span> <span style="color: #9cdcfe;">t</span> =&gt; (t, f t)) x &ne; f x
+<span style="color: #569cd6;">/-</span><span style="color: #6a9955;">- Summed over the unseen points: one closed form, the same for every learner. -/</span>
+<span style="color: #c586c0;">theorem</span> <span style="color: #dcdcaa;">nfl_total</span> [<span style="color: #4ec9b0;">Fintype</span> X] [<span style="color: #4ec9b0;">DecidableEq</span> X] [<span style="color: #4ec9b0;">Fintype</span> Y] [<span style="color: #4ec9b0;">DecidableEq</span> Y]
+    (<span style="color: #9cdcfe;">L</span> : <span style="color: #4ec9b0;">BatchLearner</span> X Y) (<span style="color: #9cdcfe;">xs</span> : <span style="color: #4ec9b0;">Fin</span> m → X) :
+    (<span style="color: #569cd6;">∑</span> <span style="color: #9cdcfe;">f</span> : X → Y, #{<span style="color: #9cdcfe;">x</span> | x ∉ Set.range xs ∧ L.learn (<span style="color: #c586c0;">fun</span> <span style="color: #9cdcfe;">i</span> =&gt; (xs i, f (xs i))) x ≠ f x})
+      / (Fintype.card (X → Y) : <span style="color: #4ec9b0;">ℚ</span>)
+      = #{<span style="color: #9cdcfe;">x</span> | x ∉ Set.range xs} * ((Fintype.card Y - 1) / Fintype.card Y) :=
+  ots_total L.learn xs
 
-<span style="color: #c586c0;">theorem</span> <span style="color: #dcdcaa;">noFreeLunch</span> [<span style="color: #4ec9b0;">Fintype</span> X] [<span style="color: #4ec9b0;">DecidableEq</span> X] [<span style="color: #4ec9b0;">Fintype</span> Y]
-    (<span style="color: #9cdcfe;">L&#8321;</span> <span style="color: #9cdcfe;">L&#8322;</span> : <span style="color: #4ec9b0;">Learner</span> X Y) (<span style="color: #9cdcfe;">train</span> <span style="color: #9cdcfe;">test</span> : <span style="color: #4ec9b0;">Finset</span> X) :
-    <span style="color: #569cd6;">&Sigma;</span> <span style="color: #9cdcfe;">f</span> : X &rarr; Y, offTrainingError L&#8321; f train test =
-    <span style="color: #569cd6;">&Sigma;</span> <span style="color: #9cdcfe;">f</span> : X &rarr; Y, offTrainingError L&#8322; f train test := <span style="color: #c586c0;">by</span>
-  <span style="color: #6a9955;">-- The sum over all target functions is invariant to learner choice</span>
-  <span style="color: #6a9955;">-- Each off-training point contributes equally across the uniform distribution</span>
-  <span style="color: #dcdcaa;">apply</span> Fintype.sum_equiv (Equiv.refl _)
-  <span style="color: #dcdcaa;">intro</span> f
-  <span style="color: #dcdcaa;">simp</span> [offTrainingError]
-  <span style="color: #6a9955;">-- Symmetry: permuting outputs preserves error count</span>
-  <span style="color: #dcdcaa;">exact</span> uniformDistribution_symmetry L&#8321; L&#8322; f train test
+<span style="color: #c586c0;">variable</span> [<span style="color: #4ec9b0;">MeasurableSpace</span> X] [<span style="color: #4ec9b0;">MeasurableSingletonClass</span> X]
+
+<span style="color: #569cd6;">/-</span><span style="color: #6a9955;">- Error of `L` after training on `xs` labelled by `c`, under the distribution `D`. -/</span>
+<span style="color: #c586c0;">abbrev</span> <span style="color: #dcdcaa;">err</span> (<span style="color: #9cdcfe;">D</span> : <span style="color: #4ec9b0;">Measure</span> X) (<span style="color: #9cdcfe;">L</span> : <span style="color: #4ec9b0;">BatchLearner</span> X <span style="color: #4ec9b0;">Bool</span>) (<span style="color: #9cdcfe;">c</span> : <span style="color: #4ec9b0;">Concept</span> X <span style="color: #4ec9b0;">Bool</span>) (<span style="color: #9cdcfe;">xs</span> : <span style="color: #4ec9b0;">Fin</span> m → X) :=
+  D {<span style="color: #9cdcfe;">x</span> | L.learn (<span style="color: #c586c0;">fun</span> <span style="color: #9cdcfe;">i</span> =&gt; (xs i, c (xs i))) x ≠ c x}
+
+<span style="color: #569cd6;">/-</span><span style="color: #6a9955;">- Shalev-Shwartz and Ben-David, Theorem 5.1, for a class `C` shattering `2m` points (all
+concepts give the book's form): every learner has a target in `C` with expected error at least
+`1/4`, and error at least `1/8` with probability at least `1/7`. -/</span>
+<span style="color: #c586c0;">theorem</span> <span style="color: #dcdcaa;">nfl_shattered</span> {<span style="color: #9cdcfe;">C</span> : <span style="color: #4ec9b0;">ConceptClass</span> X <span style="color: #4ec9b0;">Bool</span>} {<span style="color: #9cdcfe;">T</span> : <span style="color: #4ec9b0;">Finset</span> X} (<span style="color: #9cdcfe;">hT</span> : <span style="color: #4ec9b0;">Shatters</span> X C T)
+    (<span style="color: #9cdcfe;">hT0</span> : T.Nonempty) (<span style="color: #9cdcfe;">hm</span> : 2 * m ≤ T.card) (<span style="color: #9cdcfe;">L</span> : <span style="color: #4ec9b0;">BatchLearner</span> X <span style="color: #4ec9b0;">Bool</span>) :
+    <span style="color: #569cd6;">∃</span> <span style="color: #9cdcfe;">D</span> : <span style="color: #4ec9b0;">Measure</span> X, <span style="color: #4ec9b0;">IsProbabilityMeasure</span> D ∧ <span style="color: #569cd6;">∃</span> <span style="color: #9cdcfe;">c</span> ∈ C,
+      1 / 4 ≤ <span style="color: #569cd6;">∫⁻</span> <span style="color: #9cdcfe;">xs</span>, err D L c xs ∂Measure.pi (<span style="color: #c586c0;">fun</span> <span style="color: #9cdcfe;">_</span> : <span style="color: #4ec9b0;">Fin</span> m =&gt; D) ∧
+      1 / 7 ≤ Measure.pi (<span style="color: #c586c0;">fun</span> <span style="color: #9cdcfe;">_</span> : <span style="color: #4ec9b0;">Fin</span> m =&gt; D) {<span style="color: #9cdcfe;">xs</span> | 1 / 8 ≤ err D L c xs} := <span style="color: #c586c0;">by</span>
+  <span style="color: #dcdcaa;">obtain</span> ⟨<span style="color: #9cdcfe;">f</span>, <span style="color: #9cdcfe;">hE</span>, <span style="color: #9cdcfe;">hP</span>⟩ := exists_hard_labeling_on L hT0 hm  <span style="color: #6a9955;">-- average over all labelings of T</span>
+  <span style="color: #dcdcaa;">obtain</span> ⟨<span style="color: #9cdcfe;">c</span>, <span style="color: #9cdcfe;">hc</span>, <span style="color: #9cdcfe;">hcf</span>⟩ := hT f                             <span style="color: #6a9955;">-- C realises the worst labeling</span>
+  <span style="color: #dcdcaa;">exact</span> ⟨unifOn T, unifOn_isProb hT0, c, hc, expected_error_ge hT0 hcf hE,
+    prob_error_ge hT0 hcf hP⟩
+
+<span style="color: #569cd6;">/-</span><span style="color: #6a9955;">- Corollary 5.2: on an infinite domain no learner is universal (VC dimension is infinite). -/</span>
+<span style="color: #c586c0;">theorem</span> <span style="color: #dcdcaa;">no_universal_learner</span> [<span style="color: #4ec9b0;">Infinite</span> X] : ¬ <span style="color: #4ec9b0;">PACLearnable</span> X (Set.univ : <span style="color: #4ec9b0;">ConceptClass</span> X <span style="color: #4ec9b0;">Bool</span>) :=
+  not_pac_of_vcdim_eq_top _ (vcdim_univ_infinite X)
 </pre>
                     </div>
+                    <p class="text-xs text-muted mt-2" style="line-height: 1.6;">
+                        Excerpt from <a href="public/lean/NoFreeLunch.lean.txt" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;">NoFreeLunch.lean</a>
+                        (the full file, as plain text). It checks with Lean v4.31.0 and Mathlib v4.31.0
+                        (commit <code>fabf563a</code>): no <code>sorry</code>, and
+                        <code>#print axioms</code> lists only <code>propext</code>,
+                        <code>Classical.choice</code> and <code>Quot.sound</code>. It imports only
+                        Mathlib and restates, with identical code, the definitions it uses from the
+                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/tree/cdc4fc3df3d4f9487c7f91872487a8eff120d188" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;">formal learning theory kernel</a> at commit
+                        <code>cdc4fc3</code>:
+                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Basic.lean#L37" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>Concept</code></a>,
+                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Basic.lean#L46" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>ConceptClass</code></a>,
+                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Basic.lean#L76" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>HypothesisSpace</code></a>,
+                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Learner/Core.lean#L29" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>BatchLearner</code></a>,
+                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Complexity/VCDimension.lean#L22" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>Shatters</code></a>,
+                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Complexity/VCDimension.lean#L27" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>VCDim</code></a> and
+                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Criterion/PAC.lean#L55" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>PACLearnable</code></a>. It also adapts two proofs
+                        from the kernel: <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Theorem/PAC.lean#L341" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>vcdim_univ_infinite</code></a> and
+                        the uniform-distribution construction in
+                        <a href="https://github.com/Zetetic-Dhruv/formal-learning-theory-kernel/blob/cdc4fc3df3d4f9487c7f91872487a8eff120d188/FLT_Proofs/Complexity/Generalization.lean#L1647" target="_blank" rel="noopener noreferrer" style="text-decoration: underline;"><code>pac_lower_bound_core</code></a>.
+                    </p>
                     <p class="text-xs text-muted mt-2 italic">
                         One instinct runs under all of this: refuse to take a system's word for
                         its own correctness, and check it against something that cannot be argued

@@ -1,0 +1,621 @@
+/-
+No Free Lunch theorems, machine-checked in Lean 4.
+
+Checked with Lean v4.31.0 and Mathlib v4.31.0 (commit fabf563a7c95a166b8d7b6efca11c8b4dc9d911f).
+The file imports only Mathlib. Section 0 restates, with identical code, the definitions it needs
+from the formal learning theory kernel, github.com/Zetetic-Dhruv/formal-learning-theory-kernel
+at commit cdc4fc3df3d4f9487c7f91872487a8eff120d188.
+
+To check it, save this file as `NoFreeLunch.lean` in a Lean project on toolchain
+leanprover/lean4:v4.31.0 that requires Mathlib v4.31.0, then run `lake env lean NoFreeLunch.lean`.
+The `#print axioms` lines at the end should list only `propext`, `Classical.choice` and
+`Quot.sound`.
+-/
+import Mathlib
+
+open MeasureTheory
+open scoped ENNReal Finset
+
+universe u v
+
+namespace NoFreeLunch
+
+/-! ## 0. Definitions from the kernel
+
+Code identical to the kernel at commit cdc4fc3: `FLT_Proofs/Basic.lean` lines 37, 46 and 76,
+`FLT_Proofs/Learner/Core.lean` line 29, `FLT_Proofs/Complexity/VCDimension.lean` lines 22 and 27,
+`FLT_Proofs/Criterion/PAC.lean` line 55. Docstrings are shortened. -/
+
+/-- A concept is a function from domain to label. -/
+def Concept (X : Type u) (Y : Type v) := X → Y
+
+/-- A concept class is a set of concepts. -/
+abbrev ConceptClass (X : Type u) (Y : Type v) := Set (Concept X Y)
+
+/-- A hypothesis space is a set of candidate concepts that the learner searches over. -/
+abbrev HypothesisSpace (X : Type u) (Y : Type v) := Set (Concept X Y)
+
+/-- A batch learner (PAC paradigm): takes a finite sample, returns a hypothesis. -/
+structure BatchLearner (X : Type u) (Y : Type v) where
+  /-- The learner's hypothesis space -/
+  hypotheses : HypothesisSpace X Y
+  /-- The learning algorithm: given a sample, produce a hypothesis -/
+  learn : {m : ℕ} → (Fin m → X × Y) → Concept X Y
+  /-- Output is in the hypothesis space -/
+  output_in_H : ∀ {m : ℕ} (S : Fin m → X × Y), learn S ∈ hypotheses
+
+/-- A set S ⊆ X is shattered by concept class C if every labeling of S
+    is realized by some concept in C. -/
+def Shatters (X : Type u) (C : ConceptClass X Bool) (S : Finset X) : Prop :=
+  ∀ f : S → Bool, ∃ c ∈ C, ∀ x : S, c (x : X) = f x
+
+/-- VC dimension of a concept class: the size of the largest shattered set. -/
+noncomputable def VCDim (X : Type u) (C : ConceptClass X Bool) : WithTop ℕ :=
+  ⨆ (S : Finset X) (_ : Shatters X C S), (S.card : WithTop ℕ)
+
+/-- PAC (Probably Approximately Correct) learning: one learner and one sample size function
+    that work for every distribution `D` and every target `c ∈ C`. -/
+def PACLearnable (X : Type u) [MeasurableSpace X]
+    (C : ConceptClass X Bool) : Prop :=
+  ∃ (L : BatchLearner X Bool) (mf : ℝ → ℝ → ℕ),
+    ∀ (ε δ : ℝ), 0 < ε → 0 < δ →
+      ∀ (D : MeasureTheory.Measure X), MeasureTheory.IsProbabilityMeasure D →
+        ∀ (c : Concept X Bool), c ∈ C →
+          let m := mf ε δ
+          MeasureTheory.Measure.pi (fun _ : Fin m => D)
+            { xs : Fin m → X |
+              D { x | L.learn (fun i => (xs i, c (xs i))) x ≠ c x }
+                ≤ ENNReal.ofReal ε }
+            ≥ ENNReal.ofReal (1 - δ)
+
+/-! ## 1. Average case: the off-training-set identity
+
+A learning rule is any map `A` from labelled samples to hypotheses. Trained on the inputs `xs`
+labelled by a target `f`, it sees `fun i => (xs i, f (xs i))`. At a point `x` that is not a
+training input, its prediction depends only on the values of `f` away from `x`. So among all
+targets, the ones it predicts correctly at `x` are exactly one in `|Y|`. -/
+
+section AverageCase
+
+variable {X : Type u} {Y : Type v} [Fintype X] [DecidableEq X] [Fintype Y] [DecidableEq Y]
+  {m : ℕ} (A : (Fin m → X × Y) → X → Y) (xs : Fin m → X)
+
+/-- The target that equals `g` away from `x`, and at `x` equals what `A` predicts there after
+training on `g`'s labels. -/
+def extendAt {x : X} (hx : x ∉ Set.range xs) (g : {j : X // j ≠ x} → Y) : X → Y :=
+  fun j =>
+    if h : j = x then A (fun i => (xs i, g ⟨xs i, fun e => hx ⟨i, e⟩⟩)) x else g ⟨j, h⟩
+
+omit [Fintype X] [Fintype Y] [DecidableEq Y] in
+theorem extendAt_sample {x : X} (hx : x ∉ Set.range xs) (g : {j : X // j ≠ x} → Y) :
+    (fun i => (xs i, extendAt A xs hx g (xs i)))
+      = fun i => (xs i, g ⟨xs i, fun e => hx ⟨i, e⟩⟩) := by
+  funext i
+  have hi : xs i ≠ x := fun e => hx ⟨i, e⟩
+  simp [extendAt, hi]
+
+/-- Restricting to `X \ {x}` is a bijection from the targets on which `A` is right at `x`
+onto all labelings of `X \ {x}`, whatever `A` is. -/
+theorem card_right {x : X} (hx : x ∉ Set.range xs) :
+    #{f : X → Y | A (fun i => (xs i, f (xs i))) x = f x}
+      = Fintype.card Y ^ (Fintype.card X - 1) := by
+  have key : #{f : X → Y | A (fun i => (xs i, f (xs i))) x = f x}
+      = #(Finset.univ : Finset ({j : X // j ≠ x} → Y)) := by
+    refine Finset.card_nbij' (fun f j => f j) (extendAt A xs hx) ?_ ?_ ?_ ?_
+    · intro f _
+      simp
+    · intro g _
+      simp only [Finset.coe_filter, Finset.mem_univ, true_and, Set.mem_setOf_eq]
+      rw [extendAt_sample]
+      simp [extendAt]
+    · intro f hf
+      simp only [Finset.coe_filter, Finset.mem_univ, true_and, Set.mem_setOf_eq] at hf
+      funext j
+      by_cases hj : j = x
+      · subst hj
+        simpa [extendAt] using hf
+      · simp [extendAt, hj]
+    · intro g _
+      funext j
+      simp [extendAt, j.2]
+  rw [key, Finset.card_univ, Fintype.card_fun, Fintype.card_subtype_compl,
+    Fintype.card_subtype_eq]
+
+theorem card_wrong {x : X} (hx : x ∉ Set.range xs) :
+    #{f : X → Y | A (fun i => (xs i, f (xs i))) x ≠ f x}
+      = Fintype.card Y ^ Fintype.card X - Fintype.card Y ^ (Fintype.card X - 1) := by
+  have h := Finset.card_filter_add_card_filter_not (s := (Finset.univ : Finset (X → Y)))
+    (fun f => A (fun i => (xs i, f (xs i))) x = f x)
+  rw [card_right A xs hx, Finset.card_univ, Fintype.card_fun] at h
+  exact Nat.eq_sub_of_add_eq' h
+
+/-- Over all targets, `A` is wrong at an unseen point on exactly a `(|Y| - 1) / |Y|` fraction. -/
+theorem wrong_fraction {x : X} (hx : x ∉ Set.range xs) :
+    (#{f : X → Y | A (fun i => (xs i, f (xs i))) x ≠ f x} : ℚ) / Fintype.card (X → Y)
+      = (Fintype.card Y - 1) / Fintype.card Y := by
+  have hX : 0 < Fintype.card X := Fintype.card_pos_iff.mpr ⟨x⟩
+  rw [card_wrong A xs hx, Fintype.card_fun]
+  rcases Nat.eq_zero_or_pos (Fintype.card Y) with hY | hY
+  · rw [hY, zero_pow hX.ne']
+    simp
+  · obtain ⟨k, hk⟩ : ∃ k, Fintype.card X = k + 1 := ⟨Fintype.card X - 1, by omega⟩
+    rw [hk, Nat.add_sub_cancel, pow_succ, Nat.cast_sub (Nat.le_mul_of_pos_right _ hY)]
+    have hY' : (Fintype.card Y : ℚ) ≠ 0 := by exact_mod_cast hY.ne'
+    have hk' : (Fintype.card Y : ℚ) ^ k ≠ 0 := pow_ne_zero _ hY'
+    push_cast
+    field_simp
+
+/-- Mistakes of `A` off the training inputs, after training on `xs` labelled by `f`. -/
+def otsMistakes (f : X → Y) : ℕ :=
+  #{x | x ∉ Set.range xs ∧ A (fun i => (xs i, f (xs i))) x ≠ f x}
+
+/-- Double counting: the off-training-set mistakes, summed over all targets, are the per-point
+counts of wrong targets, summed over the points outside the training inputs. -/
+theorem sum_otsMistakes_eq :
+    ∑ f : X → Y, otsMistakes A xs f
+      = ∑ x ∈ Finset.univ.filter (fun x => x ∉ Set.range xs),
+          #{f : X → Y | A (fun i => (xs i, f (xs i))) x ≠ f x} := by
+  simp only [otsMistakes, Finset.card_filter]
+  rw [Finset.sum_comm, Finset.sum_filter]
+  refine Finset.sum_congr rfl fun x _ => ?_
+  by_cases hx : x ∈ Set.range xs <;> simp [hx]
+
+/-- Summed over all targets, the off-training-set mistakes of any rule have one closed form. -/
+theorem sum_otsMistakes :
+    ∑ f : X → Y, otsMistakes A xs f
+      = #{x : X | x ∉ Set.range xs}
+          * (Fintype.card Y ^ Fintype.card X - Fintype.card Y ^ (Fintype.card X - 1)) := by
+  rw [sum_otsMistakes_eq, Finset.sum_congr rfl fun x hx =>
+    card_wrong A xs (Finset.mem_filter.mp hx).2, Finset.sum_const, smul_eq_mul]
+
+/-- Averaged over a uniformly random target, the number of off-training-set mistakes of any
+rule is the number of points outside the training inputs times `(|Y| - 1) / |Y|`. -/
+theorem ots_total :
+    (∑ f : X → Y, otsMistakes A xs f) / (Fintype.card (X → Y) : ℚ)
+      = #{x : X | x ∉ Set.range xs} * ((Fintype.card Y - 1) / Fintype.card Y) := by
+  rw [sum_otsMistakes_eq, Nat.cast_sum, Finset.sum_div, Finset.sum_congr rfl
+    fun x hx => wrong_fraction A xs (Finset.mem_filter.mp hx).2, Finset.sum_const, nsmul_eq_mul]
+
+/-- Schaffer's conservation law: summed over all targets, any two learning rules make the same
+number of off-training-set mistakes. -/
+theorem conservation (B : (Fin m → X × Y) → X → Y) :
+    ∑ f : X → Y, otsMistakes A xs f = ∑ f : X → Y, otsMistakes B xs f := by
+  rw [sum_otsMistakes, sum_otsMistakes]
+
+end AverageCase
+
+/-! ## 2. Worst case: counting on a finite set -/
+
+section Counting
+
+variable {α : Type*} [Fintype α] [DecidableEq α] {m : ℕ}
+
+/-- Mistakes of the rule `A` on all of `α`, after training on `ys` labelled by `f`. -/
+def mistakes (A : (Fin m → α × Bool) → α → Bool) (ys : Fin m → α) (f : α → Bool) :
+    ℕ :=
+  #{t | A (fun i => (ys i, f (ys i))) t ≠ f t}
+
+omit [DecidableEq α] in
+theorem mistakes_le (A : (Fin m → α × Bool) → α → Bool) (ys : Fin m → α)
+    (f : α → Bool) : mistakes A ys f ≤ Fintype.card α :=
+  (Finset.card_filter_le _ _).trans_eq Finset.card_univ
+
+theorem card_unseen (ys : Fin m → α) :
+    Fintype.card α - m ≤ #{t : α | t ∉ Set.range ys} := by
+  have h := Finset.card_filter_add_card_filter_not (s := (Finset.univ : Finset α))
+    (fun t => t ∈ Set.range ys)
+  have hseen : #{t : α | t ∈ Set.range ys} ≤ m :=
+    calc #{t : α | t ∈ Set.range ys} ≤ #(Finset.univ.image ys) :=
+          Finset.card_le_card fun t ht => by simpa [Set.mem_range] using ht
+      _ ≤ #(Finset.univ : Finset (Fin m)) := Finset.card_image_le
+      _ = m := by simp
+  rw [Finset.card_univ] at h
+  omega
+
+/-- For a fixed sample, summed over all labelings, every point outside the sample is predicted
+wrongly for exactly half of the labelings (section 1 with `Y = Bool`). -/
+theorem sum_mistakes_ge (A : (Fin m → α × Bool) → α → Bool) (ys : Fin m → α)
+    (hα : 0 < Fintype.card α) :
+    (Fintype.card α - m) * 2 ^ Fintype.card α ≤ 2 * ∑ f : α → Bool, mistakes A ys f := by
+  have hots (f : α → Bool) : otsMistakes A ys f ≤ mistakes A ys f :=
+    Finset.card_le_card fun t ht => by
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ht ⊢
+      exact ht.2
+  have hpow : 2 * (2 ^ Fintype.card α - 2 ^ (Fintype.card α - 1)) = 2 ^ Fintype.card α := by
+    obtain ⟨k, hk⟩ : ∃ k, Fintype.card α = k + 1 := ⟨Fintype.card α - 1, by omega⟩
+    rw [hk, Nat.add_sub_cancel, pow_succ]
+    omega
+  calc (Fintype.card α - m) * 2 ^ Fintype.card α
+      ≤ #{t : α | t ∉ Set.range ys} * 2 ^ Fintype.card α :=
+        Nat.mul_le_mul_right _ (card_unseen ys)
+    _ = 2 * ∑ f : α → Bool, otsMistakes A ys f := by
+        rw [sum_otsMistakes, Fintype.card_bool, mul_left_comm, hpow]
+    _ ≤ 2 * ∑ f : α → Bool, mistakes A ys f :=
+        Nat.mul_le_mul_left _ (Finset.sum_le_sum fun f _ => hots f)
+
+/-- Reverse Markov for counts: if values in `[0, n]` average at least `n / 4`, then at least a
+seventh of them are at least `n / 8`. -/
+theorem reverse_markov {ι : Type*} (s : Finset ι) (e : ι → ℕ) {n : ℕ} (hn : 0 < n)
+    (hle : ∀ i ∈ s, e i ≤ n) (havg : n * #s ≤ 4 * ∑ i ∈ s, e i) :
+    #s ≤ 7 * #{i ∈ s | n ≤ 8 * e i} := by
+  have hsplit := Finset.sum_filter_add_sum_filter_not s (fun i => n ≤ 8 * e i) e
+  have hcard := Finset.card_filter_add_card_filter_not (s := s) (fun i => n ≤ 8 * e i)
+  have h1 : ∑ i ∈ s with n ≤ 8 * e i, e i ≤ #{i ∈ s | n ≤ 8 * e i} * n := by
+    simpa using Finset.sum_le_card_nsmul _ e n fun i hi => hle i (Finset.mem_filter.mp hi).1
+  have h2 : ∑ i ∈ s with ¬ n ≤ 8 * e i, 8 * e i ≤ #{i ∈ s | ¬ n ≤ 8 * e i} * n := by
+    simpa using Finset.sum_le_card_nsmul _ (fun i => 8 * e i) n fun i hi => by
+      have := (Finset.mem_filter.mp hi).2
+      omega
+  rw [← Finset.mul_sum] at h2
+  have hN : n * #s = n * #{i ∈ s | n ≤ 8 * e i} + n * #{i ∈ s | ¬ n ≤ 8 * e i} := by
+    rw [← hcard, Nat.mul_add]
+  have key : n * #s ≤ n * (7 * #{i ∈ s | n ≤ 8 * e i}) := by
+    linarith
+  exact Nat.le_of_mul_le_mul_left key hn
+
+/-- Double averaging. Some labeling of `α` defeats `A`: averaged over all samples of size `m`,
+`A` errs on at least a quarter of `α`, and for at least a seventh of the samples it errs on at
+least an eighth of `α`. -/
+theorem exists_hard_labeling (A : (Fin m → α × Bool) → α → Bool)
+    (hα : 0 < Fintype.card α) (hm : 2 * m ≤ Fintype.card α) :
+    ∃ f : α → Bool,
+      Fintype.card α * Fintype.card α ^ m ≤ 4 * ∑ ys : Fin m → α, mistakes A ys f ∧
+      Fintype.card α ^ m
+        ≤ 7 * #{ys : Fin m → α | Fintype.card α ≤ 8 * mistakes A ys f} := by
+  have hNm : Fintype.card (Fin m → α) = Fintype.card α ^ m := by
+    rw [Fintype.card_fun, Fintype.card_fin]
+  have hsum : ∑ _f : α → Bool, (Fintype.card α - m) * Fintype.card α ^ m
+      ≤ ∑ f : α → Bool, 2 * ∑ ys : Fin m → α, mistakes A ys f := by
+    rw [Finset.sum_const, Finset.card_univ, Fintype.card_fun, Fintype.card_bool, smul_eq_mul,
+      ← Finset.mul_sum, Finset.sum_comm]
+    calc 2 ^ Fintype.card α * ((Fintype.card α - m) * Fintype.card α ^ m)
+        = ∑ _ys : Fin m → α, (Fintype.card α - m) * 2 ^ Fintype.card α := by
+          rw [Finset.sum_const, Finset.card_univ, hNm, smul_eq_mul]
+          ring
+      _ ≤ ∑ ys : Fin m → α, 2 * ∑ f : α → Bool, mistakes A ys f :=
+          Finset.sum_le_sum fun ys _ => sum_mistakes_ge A ys hα
+      _ = 2 * ∑ ys : Fin m → α, ∑ f : α → Bool, mistakes A ys f := by
+          rw [Finset.mul_sum]
+  obtain ⟨f, -, hf⟩ := Finset.exists_le_of_sum_le Finset.univ_nonempty hsum
+  have hE :
+      Fintype.card α * Fintype.card α ^ m ≤ 4 * ∑ ys : Fin m → α, mistakes A ys f := by
+    have h2 : Fintype.card α ≤ 2 * (Fintype.card α - m) := by omega
+    calc Fintype.card α * Fintype.card α ^ m
+        ≤ 2 * (Fintype.card α - m) * Fintype.card α ^ m := Nat.mul_le_mul_right _ h2
+      _ = 2 * ((Fintype.card α - m) * Fintype.card α ^ m) := by ring
+      _ ≤ 2 * (2 * ∑ ys : Fin m → α, mistakes A ys f) := Nat.mul_le_mul_left _ hf
+      _ = 4 * ∑ ys : Fin m → α, mistakes A ys f := by ring
+  refine ⟨f, hE, ?_⟩
+  have h := reverse_markov Finset.univ (fun ys : Fin m → α => mistakes A ys f) hα
+    (fun ys _ => mistakes_le A ys f) (by rwa [Finset.card_univ, hNm])
+  rwa [Finset.card_univ, hNm] at h
+
+end Counting
+
+/-! ## 3. The uniform distribution on a finite set
+
+As in the kernel's `pac_lower_bound_core` (`FLT_Proofs/Complexity/Generalization.lean` line
+1647), the uniform distribution on `T` is pushed forward from the subtype `↥T`. Its product
+measure is then a pushforward along an embedding of a finite space, so it can be computed on
+every set, measurable or not. -/
+
+section Uniform
+
+variable {X : Type u} [MeasurableSpace X] [MeasurableSingletonClass X] {m : ℕ}
+
+/-- The uniform distribution on the points of a finite set `T`, as a measure on `↥T`. -/
+noncomputable def unifT (T : Finset X) : Measure T := (T.card : ℝ≥0∞)⁻¹ • Measure.count
+
+/-- The uniform distribution on a finite set `T ⊆ X`. -/
+noncomputable def unifOn (T : Finset X) : Measure X := (unifT T).map (↑)
+
+theorem unifT_singleton (T : Finset X) (t : T) : unifT T {t} = (T.card : ℝ≥0∞)⁻¹ := by
+  simp [unifT]
+
+theorem unifT_isProb {T : Finset X} (hT : T.Nonempty) : IsProbabilityMeasure (unifT T) := by
+  constructor
+  rw [← Finset.coe_univ, ← sum_measure_singleton]
+  simp only [unifT_singleton, Finset.sum_const, Finset.card_univ, Fintype.card_coe, nsmul_eq_mul]
+  exact ENNReal.mul_inv_cancel (by simpa using hT.card_pos.ne') (ENNReal.natCast_ne_top _)
+
+theorem unifOn_isProb {T : Finset X} (hT : T.Nonempty) : IsProbabilityMeasure (unifOn T) := by
+  haveI := unifT_isProb hT
+  exact Measure.isProbabilityMeasure_map measurable_subtype_coe.aemeasurable
+
+theorem measurableEmbedding_val (T : Finset X) : MeasurableEmbedding ((↑) : T → X) where
+  injective := Subtype.val_injective
+  measurable := measurable_subtype_coe
+  measurableSet_image' _ _ := (Set.toFinite _).measurableSet
+
+theorem measurableEmbedding_valPi (T : Finset X) (m : ℕ) :
+    MeasurableEmbedding (fun (ys : Fin m → T) (i : Fin m) => (ys i : X)) where
+  injective _ _ h := funext fun i => Subtype.val_injective (congr_fun h i)
+  measurable := measurable_pi_lambda _ fun i => measurable_subtype_coe.comp (measurable_pi_apply i)
+  measurableSet_image' _ _ := (Set.toFinite _).measurableSet
+
+open Classical in
+theorem unifT_apply (T : Finset X) (s : Set T) : unifT T s = #{t | t ∈ s} / T.card := by
+  have hs : s = ↑(Finset.univ.filter fun t => t ∈ s) := by
+    ext t
+    simp
+  rw [show unifT T s = unifT T ↑(Finset.univ.filter fun t => t ∈ s) by rw [← hs],
+    ← sum_measure_singleton]
+  simp only [unifT_singleton, Finset.sum_const, nsmul_eq_mul]
+  rw [div_eq_mul_inv]
+
+open Classical in
+theorem unifOn_apply (T : Finset X) (S : Set X) :
+    unifOn T S = #{t : T | (t : X) ∈ S} / T.card := by
+  rw [unifOn, (measurableEmbedding_val T).map_apply, unifT_apply]
+  rfl
+
+theorem pi_unifOn {T : Finset X} (hT : T.Nonempty) (m : ℕ) :
+    Measure.pi (fun _ : Fin m => unifOn T)
+      = (Measure.pi fun _ : Fin m => unifT T).map (fun ys i => (ys i : X)) := by
+  haveI := unifT_isProb hT
+  haveI : IsProbabilityMeasure ((unifT T).map ((↑) : T → X)) := unifOn_isProb hT
+  exact (Measure.pi_map_pi (μ := fun _ : Fin m => unifT T) (f := fun _ => ((↑) : T → X))
+    (fun _ => measurable_subtype_coe.aemeasurable)).symm
+
+open Classical in
+theorem pi_unifOn_apply {T : Finset X} (hT : T.Nonempty) (A : Set (Fin m → X)) :
+    Measure.pi (fun _ : Fin m => unifOn T) A
+      = #{ys : Fin m → T | (fun i => (ys i : X)) ∈ A} / (T.card : ℝ≥0∞) ^ m := by
+  haveI := unifT_isProb hT
+  rw [pi_unifOn hT, (measurableEmbedding_valPi T m).map_apply]
+  have hA : (fun (ys : Fin m → T) (i : Fin m) => (ys i : X)) ⁻¹' A
+      = ↑(Finset.univ.filter fun ys : Fin m → T => (fun i => (ys i : X)) ∈ A) := by
+    ext ys
+    simp
+  rw [hA, ← sum_measure_singleton]
+  simp only [Measure.pi_singleton, unifT_singleton, Finset.prod_const, Finset.card_univ,
+    Fintype.card_fin, Finset.sum_const, nsmul_eq_mul]
+  rw [div_eq_mul_inv, ENNReal.inv_pow]
+
+theorem lintegral_pi_unifOn {T : Finset X} (hT : T.Nonempty) (g : (Fin m → X) → ℝ≥0∞) :
+    ∫⁻ xs, g xs ∂Measure.pi (fun _ : Fin m => unifOn T)
+      = (∑ ys : Fin m → T, g fun i => ys i) / (T.card : ℝ≥0∞) ^ m := by
+  haveI := unifT_isProb hT
+  rw [pi_unifOn hT, (measurableEmbedding_valPi T m).lintegral_map, lintegral_fintype]
+  simp only [Measure.pi_singleton, unifT_singleton, Finset.prod_const, Finset.card_univ,
+    Fintype.card_fin]
+  rw [div_eq_mul_inv, ENNReal.inv_pow, Finset.sum_mul]
+
+/-- Under the uniform distribution on `T`, the probabilities of two disjoint events add up to
+at most one, whether or not the events are measurable. -/
+theorem pi_unifOn_add_le {T : Finset X} (hT : T.Nonempty) {A B : Set (Fin m → X)}
+    (hAB : Disjoint A B) :
+    Measure.pi (fun _ : Fin m => unifOn T) A + Measure.pi (fun _ : Fin m => unifOn T) B ≤ 1 := by
+  classical
+  rw [pi_unifOn_apply hT, pi_unifOn_apply hT, ENNReal.div_add_div_same]
+  have hcard : #{ys : Fin m → T | (fun i => (ys i : X)) ∈ A}
+      + #{ys : Fin m → T | (fun i => (ys i : X)) ∈ B} ≤ T.card ^ m := by
+    rw [← Finset.card_union_of_disjoint (Finset.disjoint_filter.mpr fun ys _ hA hB =>
+      Set.disjoint_left.mp hAB hA hB)]
+    calc _ ≤ #(Finset.univ : Finset (Fin m → T)) := Finset.card_le_univ _
+      _ = T.card ^ m := by simp
+  have hpos : (T.card : ℝ≥0∞) ^ m ≠ 0 := pow_ne_zero _ (by simpa using hT.card_pos.ne')
+  have htop : (T.card : ℝ≥0∞) ^ m ≠ ∞ := ENNReal.pow_ne_top (ENNReal.natCast_ne_top _)
+  calc _ ≤ (T.card : ℝ≥0∞) ^ m / (T.card : ℝ≥0∞) ^ m := by
+        gcongr
+        exact_mod_cast hcard
+    _ = 1 := ENNReal.div_self hpos htop
+
+end Uniform
+
+/-! ## 4. Worst case: Shalev-Shwartz and Ben-David, Theorem 5.1 -/
+
+/-- `1 / k ≤ a / b` in `ℝ≥0∞` exactly when `b ≤ k * a` in `ℕ`. -/
+theorem one_div_le_div_iff {a b k : ℕ} (hb : 0 < b) (hk : 0 < k) :
+    (1 : ℝ≥0∞) / k ≤ a / b ↔ b ≤ k * a := by
+  rw [ENNReal.le_div_iff_mul_le (Or.inl (by exact_mod_cast hb.ne'))
+      (Or.inl (ENNReal.natCast_ne_top b)), one_div, ← ENNReal.div_eq_inv_mul,
+    ENNReal.div_le_iff (by exact_mod_cast hk.ne') (ENNReal.natCast_ne_top k), mul_comm k a]
+  norm_cast
+
+section WorstCase
+
+variable {X : Type u} [MeasurableSpace X] [MeasurableSingletonClass X] {m : ℕ}
+
+/-- The learning rule that `L` induces on the points of `T`. -/
+def onT (L : BatchLearner X Bool) (T : Finset X) : (Fin m → T × Bool) → T → Bool :=
+  fun S t => L.learn (fun i => ((S i).1, (S i).2)) t
+
+omit [MeasurableSpace X] [MeasurableSingletonClass X] in
+/-- Section 2 applied on `T`: some labeling of `T` is hard for the rule that `L` induces. -/
+theorem exists_hard_labeling_on (L : BatchLearner X Bool) {T : Finset X} (hT : T.Nonempty)
+    (hm : 2 * m ≤ T.card) :
+    ∃ f : T → Bool,
+      T.card * T.card ^ m ≤ 4 * ∑ ys : Fin m → T, mistakes (onT L T) ys f ∧
+      T.card ^ m ≤ 7 * #{ys : Fin m → T | T.card ≤ 8 * mistakes (onT L T) ys f} := by
+  classical
+  simpa using exists_hard_labeling (onT L T) (m := m) (by simpa using hT.card_pos)
+    (by simpa using hm)
+
+/-- The error of `L` on a sample drawn from `T`, when the target agrees with `f` on `T`. -/
+theorem unifOn_error {L : BatchLearner X Bool} {T : Finset X} {c : Concept X Bool}
+    {f : T → Bool} (hcf : ∀ t : T, c t = f t) (ys : Fin m → T) :
+    unifOn T {x | L.learn (fun i => ((ys i : X), c (ys i))) x ≠ c x}
+      = (mistakes (onT L T) ys f : ℝ≥0∞) / T.card := by
+  classical
+  rw [unifOn_apply]
+  congr 2
+  refine congrArg Finset.card (Finset.ext fun t => ?_)
+  simp [onT, hcf]
+
+theorem expected_error_ge {L : BatchLearner X Bool} {T : Finset X} (hT : T.Nonempty)
+    {c : Concept X Bool} {f : T → Bool} (hcf : ∀ t : T, c t = f t)
+    (hE : T.card * T.card ^ m ≤ 4 * ∑ ys : Fin m → T, mistakes (onT L T) ys f) :
+    1 / 4 ≤ ∫⁻ xs, unifOn T {x | L.learn (fun i => (xs i, c (xs i))) x ≠ c x}
+      ∂Measure.pi (fun _ : Fin m => unifOn T) := by
+  classical
+  have hn : 0 < T.card := hT.card_pos
+  have hn' : (T.card : ℝ≥0∞) ≠ 0 := by exact_mod_cast hn.ne'
+  have key :
+      (∑ ys : Fin m → T, (mistakes (onT L T) ys f : ℝ≥0∞) / T.card)
+          / (T.card : ℝ≥0∞) ^ m
+      = ((∑ ys : Fin m → T, mistakes (onT L T) ys f : ℕ) : ℝ≥0∞)
+          / ((T.card * T.card ^ m : ℕ) : ℝ≥0∞) := by
+    rw [Nat.cast_mul, Nat.cast_pow, Nat.cast_sum]
+    simp only [div_eq_mul_inv]
+    rw [← Finset.sum_mul, mul_assoc,
+      ENNReal.mul_inv (Or.inl hn') (Or.inl (ENNReal.natCast_ne_top _))]
+  rw [lintegral_pi_unifOn hT]
+  simp only [unifOn_error hcf]
+  rw [key, show (1 : ℝ≥0∞) / 4 = 1 / ((4 : ℕ) : ℝ≥0∞) by norm_num]
+  exact (one_div_le_div_iff (Nat.mul_pos hn (pow_pos hn m)) (by norm_num)).mpr hE
+
+theorem prob_error_ge {L : BatchLearner X Bool} {T : Finset X} (hT : T.Nonempty)
+    {c : Concept X Bool} {f : T → Bool} (hcf : ∀ t : T, c t = f t)
+    (hP : T.card ^ m ≤ 7 * #{ys : Fin m → T | T.card ≤ 8 * mistakes (onT L T) ys f}) :
+    1 / 7 ≤ Measure.pi (fun _ : Fin m => unifOn T)
+      {xs | 1 / 8 ≤ unifOn T {x | L.learn (fun i => (xs i, c (xs i))) x ≠ c x}} := by
+  classical
+  have hn : 0 < T.card := hT.card_pos
+  have hset : (#{ys : Fin m → T | T.card ≤ 8 * mistakes (onT L T) ys f} : ℝ≥0∞)
+        / (T.card : ℝ≥0∞) ^ m
+      = Measure.pi (fun _ : Fin m => unifOn T)
+          {xs | 1 / 8 ≤ unifOn T {x | L.learn (fun i => (xs i, c (xs i))) x ≠ c x}} := by
+    rw [pi_unifOn_apply hT]
+    congr 2
+    refine congrArg Finset.card (Finset.ext fun ys => ?_)
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, Set.mem_setOf_eq]
+    rw [unifOn_error hcf, show (1 : ℝ≥0∞) / 8 = 1 / ((8 : ℕ) : ℝ≥0∞) by norm_num,
+      one_div_le_div_iff hn (by norm_num)]
+  rw [← hset, ← Nat.cast_pow,
+    show (1 : ℝ≥0∞) / 7 = 1 / ((7 : ℕ) : ℝ≥0∞) by norm_num]
+  exact (one_div_le_div_iff (pow_pos hn m) (by norm_num)).mpr hP
+
+end WorstCase
+
+/-! ## 5. Consequences -/
+
+theorem shatters_univ {X : Type u} (T : Finset X) :
+    Shatters X (Set.univ : ConceptClass X Bool) T := by
+  classical
+  intro f
+  exact ⟨fun x => if h : x ∈ T then f ⟨x, h⟩ else false, Set.mem_univ _, fun x => by simp⟩
+
+/-- The class of all concepts on an infinite domain has infinite VC dimension
+(the kernel's `vcdim_univ_infinite`, `FLT_Proofs/Theorem/PAC.lean` line 341). -/
+theorem vcdim_univ_infinite (X : Type u) [Infinite X] :
+    VCDim X (Set.univ : ConceptClass X Bool) = ⊤ := by
+  refine WithTop.eq_top_iff_forall_ge.mpr fun n => ?_
+  obtain ⟨S, hS⟩ := Infinite.exists_subset_card_eq X n
+  calc (n : WithTop ℕ) = S.card := by rw [hS]
+    _ ≤ VCDim X Set.univ := le_iSup₂_of_le S (shatters_univ S) le_rfl
+
+section Consequences
+
+variable {X : Type u} [MeasurableSpace X] [MeasurableSingletonClass X]
+
+/-- Infinite VC dimension rules out PAC learning: the lower half of the fundamental theorem.
+A PAC learner would need `m = mf (1/16) (1/16)` samples, and `C` shatters more than `2m`
+points, so the worst case above defeats it. -/
+theorem not_pac_of_vcdim_eq_top (C : ConceptClass X Bool) (hC : VCDim X C = ⊤) :
+    ¬ PACLearnable X C := by
+  rintro ⟨L, mf, hpac⟩
+  obtain ⟨T, hTC, hTm⟩ :
+      ∃ T : Finset X, Shatters X C T ∧ 2 * mf (1 / 16) (1 / 16) < T.card := by
+    rw [VCDim, iSup₂_eq_top] at hC
+    obtain ⟨T, hTC, hlt⟩ := hC (2 * mf (1 / 16) (1 / 16) : ℕ) (WithTop.coe_lt_top _)
+    exact ⟨T, hTC, by exact_mod_cast hlt⟩
+  have hT0 : T.Nonempty := Finset.card_pos.mp (by omega)
+  obtain ⟨f, -, hcount⟩ := exists_hard_labeling_on L hT0 hTm.le
+  obtain ⟨c, hcC, hcf⟩ := hTC f
+  have hP := prob_error_ge hT0 hcf hcount
+  have hgood := hpac (1 / 16) (1 / 16) (by norm_num) (by norm_num) (unifOn T)
+    (unifOn_isProb hT0) c hcC
+  simp only at hgood
+  have h16 : ENNReal.ofReal (1 / 16) < 1 / 8 := by
+    rw [ENNReal.ofReal_div_of_pos (by norm_num), ENNReal.ofReal_one, ENNReal.ofReal_ofNat]
+    norm_num
+  have hdisj : Disjoint
+      {xs : Fin (mf (1 / 16) (1 / 16)) → X |
+        unifOn T {x | L.learn (fun i => (xs i, c (xs i))) x ≠ c x} ≤ ENNReal.ofReal (1 / 16)}
+      {xs | 1 / 8 ≤ unifOn T {x | L.learn (fun i => (xs i, c (xs i))) x ≠ c x}} := by
+    rw [Set.disjoint_left]
+    intro xs h1 h2
+    exact absurd (h2.trans h1) (not_le.mpr h16)
+  have hsum := (add_le_add hgood hP).trans (pi_unifOn_add_le hT0 hdisj)
+  rw [show (1 : ℝ≥0∞) / 7 = ENNReal.ofReal (1 / 7) by
+      rw [ENNReal.ofReal_div_of_pos (by norm_num), ENNReal.ofReal_one, ENNReal.ofReal_ofNat],
+    ← ENNReal.ofReal_add (by norm_num) (by norm_num), ← ENNReal.ofReal_one,
+    ENNReal.ofReal_le_ofReal_iff zero_le_one] at hsum
+  norm_num at hsum
+
+end Consequences
+
+/-! ## Headline statements
+
+The block from `variable {X : Type u}` to `no_universal_learner` is the excerpt shown on
+zetesislabs.com/consulting.html. -/
+
+variable {X : Type u} {Y : Type v} {m : ℕ}
+
+/-- Wolpert (1996), Schaffer (1994): over all targets `f : X → Y`, every learner is wrong at a
+point outside its training inputs for exactly a `(|Y| - 1) / |Y|` fraction of the targets. -/
+theorem nfl_average [Fintype X] [DecidableEq X] [Fintype Y] [DecidableEq Y]
+    (L : BatchLearner X Y) (xs : Fin m → X) {x : X} (hx : x ∉ Set.range xs) :
+    (#{f : X → Y | L.learn (fun i => (xs i, f (xs i))) x ≠ f x} : ℚ) / Fintype.card (X → Y)
+      = (Fintype.card Y - 1) / Fintype.card Y :=
+  wrong_fraction L.learn xs hx  -- the targets it gets right at x biject with labelings of X \ {x}
+
+/-- Summed over the unseen points: one closed form, the same for every learner. -/
+theorem nfl_total [Fintype X] [DecidableEq X] [Fintype Y] [DecidableEq Y]
+    (L : BatchLearner X Y) (xs : Fin m → X) :
+    (∑ f : X → Y, #{x | x ∉ Set.range xs ∧ L.learn (fun i => (xs i, f (xs i))) x ≠ f x})
+      / (Fintype.card (X → Y) : ℚ)
+      = #{x | x ∉ Set.range xs} * ((Fintype.card Y - 1) / Fintype.card Y) :=
+  ots_total L.learn xs
+
+variable [MeasurableSpace X] [MeasurableSingletonClass X]
+
+/-- Error of `L` after training on `xs` labelled by `c`, under the distribution `D`. -/
+abbrev err (D : Measure X) (L : BatchLearner X Bool) (c : Concept X Bool) (xs : Fin m → X) :=
+  D {x | L.learn (fun i => (xs i, c (xs i))) x ≠ c x}
+
+/-- Shalev-Shwartz and Ben-David, Theorem 5.1, for a class `C` shattering `2m` points (all
+concepts give the book's form): every learner has a target in `C` with expected error at least
+`1/4`, and error at least `1/8` with probability at least `1/7`. -/
+theorem nfl_shattered {C : ConceptClass X Bool} {T : Finset X} (hT : Shatters X C T)
+    (hT0 : T.Nonempty) (hm : 2 * m ≤ T.card) (L : BatchLearner X Bool) :
+    ∃ D : Measure X, IsProbabilityMeasure D ∧ ∃ c ∈ C,
+      1 / 4 ≤ ∫⁻ xs, err D L c xs ∂Measure.pi (fun _ : Fin m => D) ∧
+      1 / 7 ≤ Measure.pi (fun _ : Fin m => D) {xs | 1 / 8 ≤ err D L c xs} := by
+  obtain ⟨f, hE, hP⟩ := exists_hard_labeling_on L hT0 hm  -- average over all labelings of T
+  obtain ⟨c, hc, hcf⟩ := hT f                             -- C realises the worst labeling
+  exact ⟨unifOn T, unifOn_isProb hT0, c, hc, expected_error_ge hT0 hcf hE,
+    prob_error_ge hT0 hcf hP⟩
+
+/-- Corollary 5.2: on an infinite domain no learner is universal (VC dimension is infinite). -/
+theorem no_universal_learner [Infinite X] : ¬ PACLearnable X (Set.univ : ConceptClass X Bool) :=
+  not_pac_of_vcdim_eq_top _ (vcdim_univ_infinite X)
+
+/-- Theorem 5.1 exactly as stated in the book: any learner on a finite domain, `2m ≤ |X|`. -/
+theorem nfl_fixed_sample [Fintype X] [Nonempty X] (hm : 2 * m ≤ Fintype.card X)
+    (L : BatchLearner X Bool) :
+    ∃ D : Measure X, IsProbabilityMeasure D ∧ ∃ c : Concept X Bool,
+      1 / 4 ≤ ∫⁻ xs, err D L c xs ∂Measure.pi (fun _ : Fin m => D) ∧
+      1 / 7 ≤ Measure.pi (fun _ : Fin m => D) {xs | 1 / 8 ≤ err D L c xs} := by
+  obtain ⟨D, hD, c, -, h⟩ :=
+    nfl_shattered (shatters_univ Finset.univ) Finset.univ_nonempty (by simpa using hm) L
+  exact ⟨D, hD, c, h⟩
+
+omit [MeasurableSpace X] [MeasurableSingletonClass X] in
+/-- Wolpert's form: summed over all targets, any two learners make the same number of
+off-training-set mistakes. -/
+theorem nfl_conservation [Fintype X] [DecidableEq X] [Fintype Y] [DecidableEq Y]
+    (L L' : BatchLearner X Y) (xs : Fin m → X) :
+    ∑ f : X → Y, otsMistakes L.learn xs f = ∑ f : X → Y, otsMistakes L'.learn xs f :=
+  conservation L.learn xs L'.learn
+
+end NoFreeLunch
+
+#print axioms NoFreeLunch.nfl_average
+#print axioms NoFreeLunch.nfl_total
+#print axioms NoFreeLunch.nfl_shattered
+#print axioms NoFreeLunch.no_universal_learner
+#print axioms NoFreeLunch.nfl_fixed_sample
+#print axioms NoFreeLunch.not_pac_of_vcdim_eq_top
+#print axioms NoFreeLunch.nfl_conservation
